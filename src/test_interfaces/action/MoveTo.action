@@ -1,0 +1,19 @@
+# Goal
+float64 target_x
+float64 target_y
+float64 target_z
+float64 target_angle
+---
+# Result
+string status
+float64 final_x
+float64 final_y
+float64 final_z
+float64 final_angle
+---
+# Feedback
+float64 current_x
+float64 current_y
+float64 current_z
+float64 current_angle
+float64 progress_percent
