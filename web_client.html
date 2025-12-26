@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>ROS2 Monitor</title>
+    <script src="https://unpkg.com/roslib@1.3.0/build/roslib.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: white; text-align: center; margin-bottom: 20px; }
+        
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        
+        .message {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .message.topic { border-left: 4px solid #28a745; }
+        .message.service { border-left: 4px solid #ffc107; }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #5568d3; }
+        
+        input { 
+            padding: 8px; 
+            margin: 5px; 
+            border-radius: 5px; 
+            border: 1px solid #ddd;
+            width: 80px;
+        }
+        
+        h2 { color: #333; margin-bottom: 15px; }
+        .time { color: #999; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📍 ROS2 Position Monitor</h1>
+        
+        <div class="section">
+            <div id="status" class="status disconnected">Connecting...</div>
+        </div>
+        
+        <div class="section">
+            <h2>📡 Topic - Position (A ↔ B ↔ Web)</h2>
+            <div>
+                <input id="pub_x" type="number" step="0.1" value="5.0" placeholder="x">
+                <input id="pub_y" type="number" step="0.1" value="3.0" placeholder="y">
+                <input id="pub_z" type="number" step="0.1" value="2.0" placeholder="z">
+                <input id="pub_angle" type="number" step="0.1" value="45.0" placeholder="angle">
+                <button onclick="publishPosition()">Publish from Web</button>
+            </div>
+            <div id="topic-messages"></div>
+        </div>
+        
+        <div class="section">
+            <h2>📞 Service - Calculate Distance</h2>
+            <div>
+                Point 1: 
+                <input id="x1" type="number" step="0.1" value="0" placeholder="x1">
+                <input id="y1" type="number" step="0.1" value="0" placeholder="y1">
+                <input id="z1" type="number" step="0.1" value="0" placeholder="z1">
+                <br>
+                Point 2: 
+                <input id="x2" type="number" step="0.1" value="10" placeholder="x2">
+                <input id="y2" type="number" step="0.1" value="10" placeholder="y2">
+                <input id="z2" type="number" step="0.1" value="5" placeholder="z2">
+                <button onclick="callService()">Calculate Distance</button>
+            </div>
+            <div id="service-messages"></div>
+        </div>
+    </div>
+    
+    <script>
+        let ros, topicListener;
+        
+        ros = new ROSLIB.Ros({ url : 'ws://localhost:9090' });
+        
+        ros.on('connection', function() {
+            document.getElementById('status').textContent = '✅ Connected to ROS2';
+            document.getElementById('status').className = 'status connected';
+            setupCommunication();
+        });
+        
+        ros.on('error', function(error) {
+            document.getElementById('status').textContent = '❌ Connection Failed';
+            document.getElementById('status').className = 'status disconnected';
+        });
+        
+        ros.on('close', function() {
+            document.getElementById('status').textContent = '⚠️ Connection Closed';
+            document.getElementById('status').className = 'status disconnected';
+        });
+        
+        function setupCommunication() {
+            topicListener = new ROSLIB.Topic({
+                ros : ros,
+                name : '/position_topic',
+                messageType : 'test_interfaces/msg/Position'
+            });
+            
+            topicListener.subscribe(function(message) {
+                const text = `[${message.sender}] x=${message.x.toFixed(2)}, y=${message.y.toFixed(2)}, z=${message.z.toFixed(2)}, angle=${message.angle.toFixed(2)}°`;
+                addMessage('topic', text, 'topic-messages');
+            });
+        }
+        
+        function publishPosition() {
+            const publisher = new ROSLIB.Topic({
+                ros : ros,
+                name : '/position_topic',
+                messageType : 'test_interfaces/msg/Position'
+            });
+            
+            const message = new ROSLIB.Message({
+                sender: 'Web',
+                x: parseFloat(document.getElementById('pub_x').value),
+                y: parseFloat(document.getElementById('pub_y').value),
+                z: parseFloat(document.getElementById('pub_z').value),
+                angle: parseFloat(document.getElementById('pub_angle').value),
+                timestamp: Date.now() * 1000000
+            });
+            
+            publisher.publish(message);
+            addMessage('topic', '[Web] Position published', 'topic-messages');
+        }
+        
+        function callService() {
+            const serviceClient = new ROSLIB.Service({
+                ros : ros,
+                name : '/calculate_distance',
+                serviceType : 'test_interfaces/srv/CalculateDistance'
+            });
+            
+            const request = new ROSLIB.ServiceRequest({
+                x1: parseFloat(document.getElementById('x1').value),
+                y1: parseFloat(document.getElementById('y1').value),
+                z1: parseFloat(document.getElementById('z1').value),
+                x2: parseFloat(document.getElementById('x2').value),
+                y2: parseFloat(document.getElementById('y2').value),
+                z2: parseFloat(document.getElementById('z2').value)
+            });
+            
+            addMessage('service', `Request: (${request.x1}, ${request.y1}, ${request.z1}) → (${request.x2}, ${request.y2}, ${request.z2})`, 'service-messages');
+            
+            serviceClient.callService(request, function(result) {
+                addMessage('service', `✅ Distance: ${result.distance.toFixed(2)}m`, 'service-messages');
+            });
+        }
+        
+        function addMessage(type, text, containerId) {
+            const container = document.getElementById(containerId);
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message ' + type;
+            
+            const time = new Date().toLocaleTimeString();
+            msgDiv.innerHTML = `<span class="time">[${time}]</span> ${text}`;
+            
+            container.insertBefore(msgDiv, container.firstChild);
+            
+            while (container.children.length > 10) {
+                container.removeChild(container.lastChild);
+            }
+        }
+    </script>
+</body>
+</html>
