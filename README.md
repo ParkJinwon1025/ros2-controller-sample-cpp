@@ -1,6 +1,6 @@
 # ros2-controller-sample-cpp
 > ⚠️ **주의: 이 노드는 반드시 ROS2 Humble에서만 테스트되었습니다.**  
-> ⚠️ **주의: 리눅스 환경에서만 가능합니다.**  
+> ⚠️ **주의: 이 프로젝트는 리눅스 환경에서만 테스트 되었습니다.**  
 > ⚠️ **주의: 이 README.md에서 ros2 설치 방법은 나오지 않습니다.**
 
 ## 1. ros2 초기 설정
@@ -39,6 +39,16 @@ ros2 launch rosbridge_server  rosbridge_websocket_launch.xml # 서버 실행
 
 ## 3. 웹 브라우저에서 확인
 
-### 1. web_client.html 실행
+### 1. 터미널 실행
 
-### 2. 웹페이지에서 버튼 클릭 후 `node_a`, `node_b` 터미널 로그 확인
+### 2. 서버 실행
+```bash
+cd ros2-controller-sample-cpp
+python3 -m http.server 8000
+```
+
+### 3. 웹 브라우저 접속
+```bash
+# 로컬 노트북 or 가상환경 브라우저에서 접속
+http://192.168.189.132:8000/web_client.html
+```
