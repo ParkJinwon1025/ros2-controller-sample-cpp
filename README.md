@@ -11,7 +11,7 @@
 
 ### 2. 빌드 명령어 입력
 ```bash
-cd ros2-controller-sample-cpp # 디렉토리 이동
+cd ubisam_ros2_ws   # 디렉토리 이동
 colcon build # 패키지 빌드
 ```
 
@@ -19,19 +19,13 @@ colcon build # 패키지 빌드
 
 ```bash
 # 첫번째 터미널 ( NodeA 실행 )
-cd ros2-controller-sample-cpp
-ros2 run test_nodes node_a
+cd ubisam_ros2_ws
+ros2 launch test_nodes nodes.launch.py 
 ```
 
 ```bash
-# 두번째 터미널 ( NodeB 실행 )
-cd ros2-controller-sample-cpp
-ros2 run test_nodes node_b
-```
-
-```bash
-# 세번째 터미널 ( Ros2 WebSocket 서버 실행 )
-cd ros2-controller-sample-cpp
+# 두번째 터미널 ( Ros2 WebSocket 서버 실행 )
+cd ubisam_ros2_ws
 sudo apt update
 sudo apt install ros-humble-rosbridge-suite # 패키지 설치 
 ros2 launch rosbridge_server  rosbridge_websocket_launch.xml # 서버 실행
@@ -43,7 +37,7 @@ ros2 launch rosbridge_server  rosbridge_websocket_launch.xml # 서버 실행
 
 ### 2. 서버 실행
 ```bash
-cd ros2-controller-sample-cpp
+cd ubisam_ros2_ws
 python3 -m http.server 8000
 ```
 
